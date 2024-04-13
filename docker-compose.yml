@@ -1,0 +1,54 @@
+services:
+  zookeeper:
+    container_name: simple-data-pipeline_zookeeper
+    image: docker.io/confluentinc/cp-zookeeper:6.0.12
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    ports:
+      - 127.0.0.1:2181:2181
+    networks:
+      - simple_data_pipeline
+
+  kafka:
+    container_name: simple-data-pipeline_kafka
+    depends_on:
+      - zookeeper
+    image: docker.io/confluentinc/cp-kafka:6.0.12
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      BROKER_ID: 1
+      KAFKA_LOG_DIR: /var/log/kafka-logs
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 25000000
+      KAFKA_MESSAGE_MAX_BYTES: 25000000
+      KAFKA_MAX_REQUEST_SIZE: 25000000
+      KAFKA_MAX_PARTITION_FETCH_BYTES: 25000000
+    networks:
+      - simple_data_pipeline
+
+  kafka-ui:
+    container_name: simple-data-pipeline_kafka-ui
+    image: docker.io/provectuslabs/kafka-ui:latest
+    ports:
+      - 9100:8080
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
+    networks:
+      - simple_data_pipeline
+
+
+networks:
+  simple_data_pipeline:
+    name: simple_data_pipeline
